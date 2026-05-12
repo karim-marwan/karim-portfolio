@@ -1,0 +1,852 @@
+﻿#include <iostream>
+#include <string>
+#include <queue>
+#include <stack>
+#include <fstream>
+using namespace std;
+
+
+class Song
+{
+private:
+    int id, playCount;
+    string name, artist;
+
+public:
+    Song() : id(0), playCount(0), name(""), artist("") {}
+
+    Song(int id, string name, string artist) : id(id), name(name), artist(artist), playCount(0) {}
+
+    void incrementPlayCount()
+    {
+        playCount++;
+    }
+
+    int getId() { return id; }
+    string getName() { return name; }
+    string getArtist() { return artist; }
+    int getPlayCount() { return playCount; }
+
+    void displaySong()
+    {
+        cout << "ID: "<<"(" << id << ")" << " | Name: " << "(" << name << ")" << " | Artist: " << "(" <<  artist << ")" 
+            << " | Plays: " << "(" << playCount << ")" << endl;
+    }
+};
+
+
+class PlaylistNode
+{
+public:
+    Song data;
+    PlaylistNode* next;
+    PlaylistNode* prev;
+
+    PlaylistNode(Song s) : data(s), next(nullptr), prev(nullptr) {}
+};
+
+
+class Playlist
+{
+private:
+    string playlistName;
+    PlaylistNode* head;
+    PlaylistNode* tail;
+
+public:
+    Playlist(string name) : playlistName(name), head(nullptr), tail(nullptr) {}
+
+    bool isEmpty()
+    {
+        return head == nullptr;
+    }
+
+    
+
+    void addSong(Song s)
+    {
+        // Check if the song already exists in the playlist (by ID)
+        PlaylistNode* temp = head;
+        while (temp)
+        {
+            if (temp->data.getId() == s.getId())
+            {
+                // Song already exists, do not add it again
+                cout << "Song already exists in playlist \"" << playlistName << "\"!" << endl;
+                return;
+            }
+            temp = temp->next;
+        }
+
+        // Create a new node for the song
+        PlaylistNode* newNode = new PlaylistNode(s);
+
+        if (isEmpty())
+        {
+            head = tail = newNode;
+        }
+        else
+        {
+            tail->next = newNode;
+            newNode->prev = tail;
+            tail = newNode;
+        }
+
+        cout << "Song added successfully to playlist \"" << playlistName << "\"!" << endl;
+    }
+
+
+    bool deleteSong(int songId)
+    {
+        PlaylistNode* temp = head;
+
+        while (temp && temp->data.getId() != songId)
+        {
+            temp = temp->next;
+        }
+
+        if (!temp)
+        {
+            cout << "Song doesn't exist!" << endl;
+            return false;
+        }
+
+        if (head == tail)
+        {
+            head = tail = nullptr;
+        }
+        else
+        {
+            if (temp->prev)
+                temp->prev->next = temp->next;
+            else
+                head = temp->next;
+
+            if (temp->next)
+                temp->next->prev = temp->prev;
+            else
+                tail = temp->prev;
+        }
+
+        delete temp;
+        cout << "Song deleted successfully from playlist \"" << playlistName << "\"!" << endl;
+        return true;
+    }
+
+    void displayPlaylist()
+    {
+        if (isEmpty())
+        {
+            cout << "Playlist \"" << playlistName << "\" is empty!" << endl;
+            return;
+        }
+
+        cout << "\nPlaylist: " << playlistName << endl;
+
+        PlaylistNode* temp = head;
+        while (temp)
+        {
+            temp->data.displaySong();
+            temp = temp->next;
+        }
+    }
+
+    int countSongs()
+    {
+        int count = 0;
+        PlaylistNode* temp = head;
+
+        while (temp)
+        {
+            count++;
+            temp = temp->next;
+        }
+
+        return count;
+    }
+
+    PlaylistNode* getHead()
+    {
+        return head;
+    }
+
+    void sortByMostPlays()
+    {
+        if (!head || !head->next) return;
+
+        PlaylistNode* i = head;
+
+        while (i)
+        {
+            PlaylistNode* j = i->next;
+
+            while (j)
+            {
+                if (i->data.getPlayCount() < j->data.getPlayCount())
+                {
+                    Song temp = i->data;
+                    i->data = j->data;
+                    j->data = temp;
+                }
+
+                j = j->next;
+            }
+
+            i = i->next;
+        }
+
+        cout << "Playlist sorted by play count (most played first)." << endl;
+    }
+
+    void sortByLeastPlays()
+    {
+        if (!head || !head->next) return;
+
+        PlaylistNode* i = head;
+
+        while (i)
+        {
+            PlaylistNode* j = i->next;
+
+            while (j)
+            {
+                if (i->data.getPlayCount() > j->data.getPlayCount())
+                {
+                    Song temp = i->data;
+                    i->data = j->data;
+                    j->data = temp;
+                }
+
+                j = j->next;
+            }
+
+            i = i->next;
+        }
+
+        cout << "Playlist sorted by play count (least played first)." << endl;
+    }
+};
+
+
+
+class LibraryNode
+{
+public:
+    Song data;
+    LibraryNode* next;
+
+    LibraryNode(Song s) : data(s), next(nullptr) {}
+};
+
+class MusicLibrary
+{
+private:
+    LibraryNode* head;
+    LibraryNode* tail;
+
+public:
+    MusicLibrary() : head(nullptr), tail(nullptr) {}
+
+    void addSong(Song s)
+    {
+        LibraryNode* temp = new LibraryNode(s);
+
+        if (!head)
+        {
+            head = tail = temp;
+        }
+        else
+        {
+            tail->next = temp;
+            tail = temp;
+        }
+    }
+
+    void displaySongs()
+    {
+        if (!head)
+        {
+            cout << "Library empty . . .!" << endl;
+            return;
+        }
+
+        cout << "\n* * * Music Library * * * " << endl;
+
+        LibraryNode* temp = head;
+        while (temp)
+        {
+            temp->data.displaySong();
+            temp = temp->next;
+        }
+    }
+
+    Song* searchByName(const string& name)
+    {
+        LibraryNode* temp = head;
+
+        while (temp)
+        {
+            if (temp->data.getName() == name)
+                return &temp->data;
+
+            temp = temp->next;
+        }
+
+        return nullptr;
+    }
+
+    Song* searchByArtist(const string& artist)
+    {
+        LibraryNode* temp = head;
+
+        while (temp)
+        {
+            if (temp->data.getArtist() == artist)
+                return &temp->data;
+
+            temp = temp->next;
+        }
+
+        return nullptr;
+    }
+
+    Song* searchById(int id)
+    {
+        LibraryNode* temp = head;
+
+        while (temp)
+        {
+            if (temp->data.getId() == id)
+                return &temp->data;
+
+            temp = temp->next;
+        }
+
+        return nullptr;
+    }
+};
+
+
+
+class Player
+{
+private:
+    Song* lastPlayed;
+    queue<Song*> recentlyPlayed;
+    const int maxRecent = 7; // Max history size
+
+public:
+    Player() : lastPlayed(nullptr) {}
+
+    void playSong(Song* s) // Play song and update play count and history
+    {
+        if (!s)
+        {
+            cout << "Cannot play: Song not found!" << endl;
+            return;
+        }
+
+        s->incrementPlayCount();
+        lastPlayed = s;
+
+        recentlyPlayed.push(s);
+
+        if (recentlyPlayed.size() > maxRecent)
+        {
+            recentlyPlayed.pop();
+        }
+
+        cout << "\nNow playing:" << endl;
+        s->displaySong();
+    }
+
+    void showLastPlayed()
+    {
+        if (!lastPlayed)
+        {
+            cout << "No song has been played yet." << endl;
+        }
+        else
+        {
+            cout << "\nLast Played Song:" << endl;
+            lastPlayed->displaySong();
+        }
+    }
+
+    void showRecentlyPlayed()
+    {
+        if (recentlyPlayed.empty())
+        {
+            cout << "No recently played songs." << endl;
+            return;
+        }
+
+        cout << "\nRecently Played Songs:" << endl;
+
+        queue<Song*> tempQueue = recentlyPlayed;
+
+        while (!tempQueue.empty())
+        {
+            tempQueue.front()->displaySong();
+            tempQueue.pop();
+        }
+    }
+};
+
+
+class SearchHistory
+{
+private:
+    stack<string> history;
+
+public:
+    void addSearch(const string& s)
+    {
+        history.push(s);
+    }
+
+    void displayHistory()
+    {
+        if (history.empty())
+        {
+            cout << "No search history . . . !" << endl;
+            return;
+        }
+
+        cout << "\nSearch History (Most recent first):" << endl;
+
+        stack<string> tempStack = history;
+
+        while (!tempStack.empty())
+        {
+            cout << "- " << tempStack.top() << endl;
+            tempStack.pop();
+        }
+    }
+};
+
+
+class ShuffleNode
+{
+public:
+    Song data;
+    ShuffleNode* left;
+    ShuffleNode* right;
+
+    ShuffleNode(Song s) : data(s), left(nullptr), right(nullptr) {}
+};
+
+class ShuffleBST
+{
+private:
+    ShuffleNode* root;
+
+    ShuffleNode* insert(ShuffleNode* temp, Song s)
+    {
+        if (!temp)
+            return new ShuffleNode(s);
+
+        if (s.getName() < temp->data.getName())
+            temp->left = insert(temp->left, s);
+        else
+            temp->right = insert(temp->right, s);
+
+        return temp;
+    }
+
+    void inorder(ShuffleNode* temp)
+    {
+        if (!temp) return;
+        inorder(temp->left);
+        temp->data.displaySong();
+        inorder(temp->right);
+    }
+
+    void preorder(ShuffleNode* temp)
+    {
+        if (!temp) return;
+        temp->data.displaySong();
+        preorder(temp->left);
+        preorder(temp->right);
+    }
+
+    void postorder(ShuffleNode* temp)
+    {
+        if (!temp) return;
+        postorder(temp->left);
+        postorder(temp->right);
+        temp->data.displaySong();
+    }
+
+public:
+    ShuffleBST() : root(nullptr) {}
+
+    void buildFromPlaylist(PlaylistNode* head)
+    {
+        root = nullptr;
+
+        PlaylistNode* temp = head;
+
+        while (temp)
+        {
+            root = insert(root, temp->data);
+            temp = temp->next;
+        }
+    }
+
+    void shuffle(int type)
+    {
+        if (type == 1)
+            inorder(root);
+        else if (type == 2)
+            preorder(root);
+        else if (type == 3)
+            postorder(root);
+        else
+            cout << "Invalid shuffle type!" << endl;
+    }
+};
+
+
+class MyFileHandler
+{
+private:
+    string myPlaylistFile, myLibraryFile;
+
+public:
+    MyFileHandler(string plFile = "playlist.txt", string libFile = "musics.txt") : myPlaylistFile(plFile), myLibraryFile(libFile) {}
+
+    void savePlaylist(Playlist& p)   // Save the current playlist to a file
+    {
+        ofstream writer(myPlaylistFile);
+
+        if (!writer)
+        {
+            cout << "Error opening " << myPlaylistFile << endl;
+            return;
+        }
+
+        PlaylistNode* temp = p.getHead();
+
+        while (temp)
+        {
+            writer << temp->data.getId() << "," << temp->data.getName() << "," << temp->data.getArtist() << "\n";
+            temp = temp->next;
+        }
+
+        writer.close();
+    }
+
+    void loadPlaylist(Playlist& p) // Load playlist from file
+    {
+        ifstream reader(myPlaylistFile); 
+
+        if (!reader)
+        {
+            cout << "No existing playlist found." << endl;
+            return;
+        }
+
+        string currentLine;
+
+        while (getline(reader, currentLine))
+        {
+            if (currentLine.empty()) 
+                continue; 
+
+            size_t pos1 = currentLine.find(','); // Find first comma
+            size_t pos2 = currentLine.rfind(',');  // Find last comma
+
+            if (pos1 == string::npos || pos2 == string::npos || pos1 == pos2)  // If commas missing or only one comma invalid skip it
+                continue;  
+
+            int id = stoi(currentLine.substr(0, pos1));  // Extract substring before first comma and convert to int (Song ID)
+            string name = currentLine.substr(pos1 + 1, pos2 - pos1 - 1);  // Extract substring between first and last comma (Song Name)
+            string artist = currentLine.substr(pos2 + 1); // Extract substring after last comma  (Artist Name)
+
+            p.addSong(Song(id, name, artist)); // Create Song object and add to Playlist
+        }
+
+        reader.close();
+    }
+
+    void removeSongFromFile(int songId)
+    {
+        ifstream reader(myPlaylistFile);
+
+        if (!reader) // If file dot exist
+        {
+            cout << "File not found!" << endl;
+            return;
+        }
+
+        string content = ""; // Will store all lines except the one to delete
+        string line;   // Temporary variable for each line
+
+        while (getline(reader, line))
+        {
+            if (line.empty()) continue;
+
+            int id = stoi(line.substr(0, line.find(','))); // Extract ID from line (before first comma) and convert to int
+
+            if (id != songId) // If this is NOT the song to remove
+            {
+                content += line + "\n";  // Keep it in the content
+            }
+        }
+        reader.close();
+
+        ofstream writer(myPlaylistFile, ios::trunc);  //erases all content from the old file before writing.
+        writer << content; // Write updated content back to file
+        writer.close();
+    }
+
+};
+
+
+// Add selected song from library to playlist and save to file
+void addSongToPlaylistFromLibrary(Playlist& playlist, MusicLibrary& library, MyFileHandler& fileHandler)
+{
+    library.displaySongs();
+
+    cout << "Enter the ID of the song to add : ";
+    int id;
+    cin >> id;
+
+    Song* s = library.searchById(id);
+
+    if (s)
+    {
+        playlist.addSong(*s);
+        fileHandler.savePlaylist(playlist);
+    }
+    else
+    {
+        cout << "Song not found in library!" << endl;
+    }
+}
+
+
+int main()
+{
+    MusicLibrary library;         
+    Player player;                
+    SearchHistory history;        // Create search history stack
+
+
+    //1- Load musics.txt 
+
+    ifstream musicFile("musics.txt");  // Open musics.txt for reading
+    if (!musicFile)
+    {
+        cout << "Error: musics.txt not found in current folder!" << endl;
+    }
+    else
+    {
+        cout << "Reading musics.txt..." << endl;
+        string line;
+        while (getline(musicFile, line))  // Read each line
+        {
+            if (line.empty()) continue;  
+
+            size_t pos1 = line.find(',');    // First comma
+            size_t pos2 = line.rfind(',');   // Last comma
+
+            if (pos1 == string::npos || pos2 == string::npos || pos1 == pos2) continue;  //string::npos → The value that is returned when find does not find any comma.
+
+
+            int id = stoi(line.substr(0, pos1));                 // Extract ID
+            string name = line.substr(pos1 + 1, pos2 - pos1 - 1); // Extract Song Name
+            string artist = line.substr(pos2 + 1);               // Extract Artist
+
+            library.addSong(Song(id, name, artist)); // Add song to library
+            cout << "Loaded song: " << id << " - " << name << " by " << artist << endl;
+        }
+        musicFile.close();
+        cout << "Finished reading musics.txt" << endl;
+    }
+
+
+    // 2-Create Playlist -
+    cout << "Enter your playlist name: ";
+    string plName;
+    getline(cin, plName);                        // Get playlist name from user
+
+    Playlist playlist(plName);                   // Create new playlist object
+    string plFileName = plName + ".txt";        // File name for this playlist
+    MyFileHandler fileHandler(plFileName);      // File handler for playlist
+
+    // Load playlist from file only if it exists
+    ifstream test(plFileName);
+    if (test.good())
+    {
+        fileHandler.loadPlaylist(playlist);    // Load existing songs if file exists
+    }
+
+    // 3- Main Menu Loop
+    int choice;
+    do
+    {
+        cout << "\n* * * HOME * * *\n";
+        cout << "(1) Display Library Songs\n";
+        cout << "(2) Add Song to Playlist\n";
+        cout << "(3) Delete Song from Playlist\n";
+        cout << "(4) Display Playlist\n";
+        cout << "(5) Count Songs in Playlist\n";
+        cout << "(6) Shuffle Playlist\n";
+        cout << "(7) Play Song from Playlist\n";
+        cout << "(8) Show Last Played Song\n";
+        cout << "(9) Show Recently Played Songs\n";
+        cout << "(10) Search Song by Name\n";
+        cout << "(11) Search Song by Artist\n";
+        cout << "(12) Show Search History\n";
+        cout << "(13) Sort Playlist by Most Plays\n";
+        cout << "(14) Sort Playlist by Least Plays\n";
+        cout << "(15) Save Playlist to File\n";
+        cout << "(0) Exit\n";
+        cout << "Enter choice: ";
+        cin >> choice;
+        cin.ignore();  // Clear input buffer
+
+        switch (choice)
+        {
+
+        case 1:
+            library.displaySongs();     // Show all songs in library
+            break;
+
+        case 2:
+            addSongToPlaylistFromLibrary(playlist, library, fileHandler); // Add song to playlist
+            break;
+
+        case 3:
+        {
+            cout << "Enter ID to delete: ";
+            int id;
+            cin >> id;
+            if (playlist.deleteSong(id))         // Delete song from playlist
+                fileHandler.removeSongFromFile(id); // Remove from file
+            break;
+        }
+
+        case 4:
+            playlist.displayPlaylist();          // Display all songs in playlist
+            break;
+
+        case 5:
+            cout << "Total songs: " << playlist.countSongs() << endl; // Count songs
+            break;
+
+        case 6:
+        {
+            ShuffleBST bst;
+            bst.buildFromPlaylist(playlist.getHead());  // Build BST from playlist
+            cout << "Shuffle type\n (1) InOrder\n (2) PreOrder\n (3) PostOrder: ";
+            int t;
+            cin >> t;
+            bst.shuffle(t);                  // Shuffle playlist
+            break;
+        }
+
+        case 7:
+        {
+            playlist.displayPlaylist();       // Show playlist before playing
+            cout << "Enter ID of the song to play: ";
+            int id;
+            cin >> id;
+
+            PlaylistNode* temp = playlist.getHead();  // Start from the head of the playlist
+            Song* s = nullptr; // Pointer to store the song to be played
+
+            while (temp)
+            {
+                if (temp->data.getId() == id) // Find song by ID
+                {
+                    s = &temp->data; break;   // Store the address of the song in 's'
+                } 
+
+                temp = temp->next;
+            }
+            player.playSong(s);               // Call Player class function to play the selected song
+
+            break;
+        }
+
+
+        case 8:
+            player.showLastPlayed();          
+            break;
+
+        case 9:
+            player.showRecentlyPlayed();      
+            break;
+
+        case 10:// Search by name
+        {
+            cin.ignore(1000, '\n');  // Clear leftover input so getline works correctly
+
+            string name;
+            cout << "Enter Song Name: ";
+            getline(cin, name);
+
+            Song* s = library.searchByName(name); 
+            if (s)
+                s->displaySong();
+
+            else 
+                cout << "Not found!" << endl;
+
+            history.addSearch(name);          
+            break;
+        }
+
+        case 11: // Search by artist
+        {
+            cin.ignore(1000, '\n');
+
+            string artist;
+            cout << "Enter Artist Name: ";
+            getline(cin, artist);
+
+            Song* s = library.searchByArtist(artist); 
+            if (s)
+                s->displaySong();
+            else
+                cout << "Not found!" << endl;
+
+            history.addSearch(artist);       
+            break;
+        }
+
+        case 12:
+            history.displayHistory();          
+            break;
+
+        case 13:
+            playlist.sortByMostPlays();       
+            break;
+
+        case 14:
+            playlist.sortByLeastPlays();      
+            break;
+
+
+        case 15:// Save playlist to file
+            fileHandler.savePlaylist(playlist); 
+
+            cout << "Playlist saved ^_^" << endl;
+            break;
+
+        case 0:
+            cout << "Exiting... Thank you!" << endl;
+            break;
+
+        default:
+            cout << "Invalid choice!" << endl;
+        }
+
+
+    } while (choice != 0);
+
+    return 0;
+}
